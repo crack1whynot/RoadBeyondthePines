@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     backend_port: int = 8000
     frontend_url: str = "http://localhost:5173"
     unreal_mcp_enabled: bool = False
-    ai_provider: str = "placeholder"
+    ai_provider: str = "mock"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 

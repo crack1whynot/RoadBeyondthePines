@@ -9,6 +9,7 @@ from backend.api.routes.health import router as health_router
 from backend.api.routes.management import router as management_router
 from backend.api.routes.memory import router as memory_router
 from backend.api.routes.orchestrator import router as orchestrator_router
+from backend.api.routes.providers import router as providers_router
 from backend.api.routes.settings import router as settings_router
 from backend.api.routes.tasks import router as tasks_router
 from backend.core.config import settings
@@ -26,6 +27,8 @@ app.state.runtime = container.runtime
 app.state.orchestrator = container.orchestrator
 if container.runtime is not None:
     container.runtime.register_service("orchestrator", container.orchestrator)
+    if container.provider_manager is not None:
+        container.runtime.register_service("ai_provider_manager", container.provider_manager)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_url, "http://localhost:5173", "http://127.0.0.1:5173"],
@@ -41,6 +44,7 @@ app.include_router(management_router)
 app.include_router(orchestrator_router)
 app.include_router(brain_router)
 app.include_router(memory_router, prefix="")
+app.include_router(providers_router)
 
 
 @app.get("/")
