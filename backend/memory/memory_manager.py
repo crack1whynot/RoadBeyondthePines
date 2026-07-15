@@ -14,6 +14,9 @@ from backend.memory.memory_query import MemoryQuery
 from backend.memory.memory_serializer import MemorySerializer
 from backend.memory.memory_snapshot import MemorySnapshot
 from backend.memory.memory_store import MemoryStore
+from backend.core.logging import get_logger
+
+logger = get_logger("memory.manager")
 
 
 @dataclass(slots=True)
@@ -91,7 +94,15 @@ class MemoryManager:
         path = Path(self.storage_path)
         if not path.exists():
             return
-        loaded = self.loader.load_from_path(path)
+        try:
+            loaded = self.loader.load_from_path(path)
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+            # Disk persistence is an optional cache in this milestone.  Keep
+            # an empty in-memory store available when an old/corrupt file is
+            # encountered; the application service reports later write
+            # failures without changing the execution outcome.
+            logger.warning("Memory file could not be loaded: %s", type(error).__name__)
+            return
         for entry in loaded:
             self.index.add(entry)
             self.store.store(entry)

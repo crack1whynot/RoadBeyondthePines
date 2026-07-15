@@ -1,18 +1,35 @@
 # Brain Layer
 
-The Brain layer is the Studio's central reasoning component. It does not execute work, does not call the Runtime layer directly, and does not perform tasks. Its responsibility is to understand the project and turn a user request into a structured goal for the Planner.
+`Brain` is responsible for analysis and Goal creation, not worker control. Its
+public `analyze(request_text)` method builds a `BrainContext`, asks the rule
+based `DecisionEngine` for a decision, creates a UUID-backed `Goal`, and stores
+that Goal in its in-memory `GoalManager`.
 
-## Responsibilities
+For an explicit `diagnostic` or `echo` request, the decision target is
+`diagnostic.execute`. Other requests currently receive a broad project,
+backend, or frontend analysis target; that is not a promise that they are
+executable.
 
-- Understand user intent.
-- Build project context from current project state.
-- Read documentation, memory, and configuration.
-- Create goals that describe what should happen.
-- Pass goals onward to downstream planning layers.
+## Actual handoff
 
-## Design Principles
+`POST /brain/analyze` remains analysis-only. `POST /brain/execute` uses
+`DevelopmentRequestService`:
 
-- Provider-independent.
-- No fake AI or provider-specific implementations.
-- Dependency injection throughout.
-- Clear separation between understanding and execution.
+```text
+request -> Brain.analyze -> Goal -> Orchestrator.execute_goal
+        -> Runtime-backed agent dispatch -> actual result
+```
+
+The service reads the original request from Goal metadata, so it does not rely
+on a fixed Goal ID or parse a display description. After execution it stores a
+sanitised, best-effort summary in `ProjectMemory`; a memory failure becomes a
+warning and does not turn an already-completed execution into failure.
+
+## Current limits
+
+`ContextBuilder` receives settings through DI and builds a local project
+snapshot. It does not yet crawl project files, retrieve Memory entries, call a
+provider, or inspect Git/Unreal state. The Planner has an optional Provider
+Manager port but Phase 0 deliberately does not call it. Only explicit
+diagnostic/echo requests are executable; other requests are rejected by the
+Planner with an unsupported-request domain error.

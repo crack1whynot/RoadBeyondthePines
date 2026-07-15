@@ -14,6 +14,7 @@ from backend.agent_system.agent_result import AgentResult
 from backend.agent_system.agent_status import AgentStatus
 from backend.agent_system.agent_task import AgentTask
 from backend.agent_system.default_agents import WorldAgent
+from backend.core.execution import ExecutionStatus
 
 
 class DummyAgent(BaseAgent):
@@ -21,7 +22,11 @@ class DummyAgent(BaseAgent):
         super().__init__(name="DummyAgent", capabilities=[AgentCapability(name="Testing")], metadata=AgentMetadata(name="DummyAgent"))
 
     def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=["ok"])
+        return AgentResult.succeeded(
+            task_id=task.task_id,
+            agent_id=self.name,
+            output={"message": "ok"},
+        )
 
 
 def test_registry_registers_and_finds_agents() -> None:
@@ -41,8 +46,11 @@ def test_manager_dispatches_task() -> None:
     task = AgentTask(task_id="task-1", description="Run tests", required_capabilities=["Testing"])
     ctx = AgentContext(task=task)
     result = manager.dispatch_task(task, ctx)
-    assert result.status == AgentStatus.IDLE
-    assert result.logs == ["ok"]
+    assert result.status is ExecutionStatus.SUCCEEDED
+    assert result.success is True
+    assert result.task_id == task.task_id
+    assert result.agent_id == agent.name
+    assert result.output == {"message": "ok"}
 
 
 def test_factory_creates_supported_agent() -> None:

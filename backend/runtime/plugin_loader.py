@@ -71,13 +71,18 @@ class PluginLoader:
         plugin = self._plugins.pop(plugin_name, None)
         if plugin is not None:
             plugin.unload()
+            self._metadata.pop(plugin_name, None)
             logger.info("Unloaded plugin %s", plugin_name)
 
     def reload_plugin(self, plugin_name: str) -> None:
-        self.unload_plugin(plugin_name)
+        """Reload an already-loaded plugin without losing its instance."""
+
         plugin = self._plugins.get(plugin_name)
-        if plugin is not None:
-            plugin.load()
+        if plugin is None:
+            raise KeyError(f"Plugin '{plugin_name}' is not loaded")
+        plugin.unload()
+        plugin.load()
+        logger.info("Reloaded plugin %s", plugin_name)
 
     def unload_all(self) -> None:
         for plugin_name in list(self._plugins.keys()):

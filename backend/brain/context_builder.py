@@ -9,7 +9,7 @@ from backend.brain.context import BrainContext
 from backend.brain.knowledge import Knowledge
 from backend.brain.project_snapshot import ProjectSnapshot
 from backend.brain.project_state import ProjectState
-from backend.core.config import settings
+from backend.core.config import Settings, settings
 
 
 @dataclass(slots=True)
@@ -17,8 +17,10 @@ class ContextBuilder:
     """Builds a provider-independent context object from the current project state."""
 
     project_root: str | None = None
+    app_settings: Settings | None = None
 
     def build(self, request_text: str, *, available_agents: list[str] | None = None, available_tools: list[str] | None = None) -> BrainContext:
+        active_settings = self.app_settings or settings
         root = Path(self.project_root or ".").resolve()
         state = ProjectState(
             project_name="Road Beyond the Pines Studio",
@@ -26,7 +28,7 @@ class ContextBuilder:
             active_modules=["backend", "frontend", "shared", "docs"],
             recent_changes=["Runtime layer implemented", "Orchestrator layer implemented"],
             open_issues=[],
-            metadata={"environment": settings.app_env},
+            metadata={"environment": active_settings.app_env},
         )
         snapshot = ProjectSnapshot(
             generated_at=datetime.now(timezone.utc).isoformat(),
@@ -38,8 +40,8 @@ class ContextBuilder:
         knowledge = Knowledge(
             sources=["README.md", "docs/architecture.md", "docs/runtime.md", "docs/setup.md"],
             facts={
-                "app_name": settings.app_name,
-                "environment": settings.app_env,
+                "app_name": active_settings.app_name,
+                "environment": active_settings.app_env,
                 "runtime_ready": True,
                 "orchestrator_ready": True,
             },
@@ -52,6 +54,6 @@ class ContextBuilder:
             knowledge=knowledge,
             available_agents=available_agents or ["planner", "analyst", "reviewer"],
             available_tools=available_tools or ["filesystem", "git", "tests"],
-            configuration={"environment": settings.app_env, "debug": settings.app_debug},
+            configuration={"environment": active_settings.app_env, "debug": active_settings.app_debug},
             metadata={"project_root": str(root)},
         )

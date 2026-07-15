@@ -12,6 +12,14 @@ class DecisionEngine:
 
     def decide(self, context: BrainContext) -> Decision:
         request = context.request_text.lower()
+        if request.strip().startswith(("diagnostic", "echo")):
+            return Decision(
+                kind="execute-diagnostic",
+                rationale="The request explicitly targets the supported Phase 0 diagnostic executor.",
+                target="diagnostic.execute",
+                confidence=1.0,
+                metadata={"area": "diagnostic"},
+            )
         if "api" in request or "endpoint" in request:
             return Decision(
                 kind="define-implementation-scope",

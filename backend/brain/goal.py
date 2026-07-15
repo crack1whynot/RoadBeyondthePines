@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+from uuid import uuid4
 
 
 @dataclass(slots=True)
 class Goal:
     """A high-level objective produced by the Brain layer."""
 
-    id: str
-    priority: int
-    description: str
+    id: str = field(default_factory=lambda: str(uuid4()))
+    priority: int = 1
+    description: str = ""
     required_capabilities: list[str] = field(default_factory=list)
     dependencies: list[str] = field(default_factory=list)
     expected_result: str = ""

@@ -1,153 +1,195 @@
 from __future__ import annotations
 
+from typing import Any
+
 from backend.agent_system.agent import BaseAgent
 from backend.agent_system.agent_capability import AgentCapability
 from backend.agent_system.agent_context import AgentContext
 from backend.agent_system.agent_metadata import AgentMetadata
 from backend.agent_system.agent_result import AgentResult
-from backend.agent_system.agent_status import AgentStatus
 from backend.agent_system.agent_task import AgentTask
+from backend.core.execution import ExecutionStatus
 
 
-class WorldAgent(BaseAgent):
+class DiagnosticAgent(BaseAgent):
+    """A local, deterministic agent used to verify the execution pipeline."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="DiagnosticAgent",
+            capabilities=[
+                AgentCapability(name="diagnostic.execute"),
+                AgentCapability(name="system.echo"),
+            ],
+            metadata=AgentMetadata(
+                name="DiagnosticAgent",
+                description="Echoes an explicitly supplied local payload for pipeline diagnostics",
+                priority=100,
+            ),
+        )
+
+    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
+        if task.cancellation_token:
+            return AgentResult.failed(
+                task_id=task.task_id,
+                agent_id=self.name,
+                error="Task was cancelled before diagnostic execution",
+                code="TASK_CANCELLED",
+                status=ExecutionStatus.CANCELLED,
+            )
+
+        # This is a real local operation: the caller's payload is returned
+        # unchanged.  When no dedicated payload is supplied, the supplied
+        # parameter object itself is the diagnostic payload.
+        payload: Any = task.parameters.get("payload", task.parameters)
+        return AgentResult.succeeded(
+            task_id=task.task_id,
+            agent_id=self.name,
+            output=payload,
+            metadata={"operation": "echo"},
+        )
+
+
+class NotImplementedAgent(BaseAgent):
+    """Explicit failure boundary for built-ins without an implementation."""
+
+    def __init__(self, *, name: str, capability: str, description: str) -> None:
+        super().__init__(
+            name=name,
+            capabilities=[AgentCapability(name=capability)],
+            metadata=AgentMetadata(name=name, description=description),
+        )
+        self._capability = capability
+
+    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
+        if task.cancellation_token:
+            return AgentResult.failed(
+                task_id=task.task_id,
+                agent_id=self.name,
+                error="Task was cancelled before agent execution",
+                code="TASK_CANCELLED",
+                status=ExecutionStatus.CANCELLED,
+            )
+        return AgentResult.failed(
+            task_id=task.task_id,
+            agent_id=self.name,
+            error=f"{self.name} is not implemented in the current execution pipeline",
+            code="NOT_IMPLEMENTED",
+            metadata={"capability": self._capability},
+        )
+
+
+class WorldAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="WorldAgent",
-            capabilities=[AgentCapability(name="WorldGeneration")],
-            metadata=AgentMetadata(name="WorldAgent", description="Manages world generation tasks"),
+            capability="WorldGeneration",
+            description="Reserved for world generation tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled world task: {task.description}"])
 
-
-class GameplayAgent(BaseAgent):
+class GameplayAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="GameplayAgent",
-            capabilities=[AgentCapability(name="Gameplay")],
-            metadata=AgentMetadata(name="GameplayAgent", description="Handles gameplay-related tasks"),
+            capability="Gameplay",
+            description="Reserved for gameplay tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled gameplay task: {task.description}"])
 
-
-class VehicleAgent(BaseAgent):
+class VehicleAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="VehicleAgent",
-            capabilities=[AgentCapability(name="Vehicles")],
-            metadata=AgentMetadata(name="VehicleAgent", description="Handles vehicle-related tasks"),
+            capability="Vehicles",
+            description="Reserved for vehicle tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled vehicle task: {task.description}"])
 
-
-class UIAgent(BaseAgent):
+class UIAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="UIAgent",
-            capabilities=[AgentCapability(name="UserInterface")],
-            metadata=AgentMetadata(name="UIAgent", description="Handles UI-related tasks"),
+            capability="UserInterface",
+            description="Reserved for user-interface tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled UI task: {task.description}"])
 
-
-class AnimationAgent(BaseAgent):
+class AnimationAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="AnimationAgent",
-            capabilities=[AgentCapability(name="Animation")],
-            metadata=AgentMetadata(name="AnimationAgent", description="Handles animation-related tasks"),
+            capability="Animation",
+            description="Reserved for animation tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled animation task: {task.description}"])
 
-
-class AudioAgent(BaseAgent):
+class AudioAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="AudioAgent",
-            capabilities=[AgentCapability(name="Audio")],
-            metadata=AgentMetadata(name="AudioAgent", description="Handles audio-related tasks"),
+            capability="Audio",
+            description="Reserved for audio tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled audio task: {task.description}"])
 
-
-class NetworkingAgent(BaseAgent):
+class NetworkingAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="NetworkingAgent",
-            capabilities=[AgentCapability(name="Networking")],
-            metadata=AgentMetadata(name="NetworkingAgent", description="Handles networking-related tasks"),
+            capability="Networking",
+            description="Reserved for networking tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled networking task: {task.description}"])
 
-
-class TestingAgent(BaseAgent):
+class TestingAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="TestingAgent",
-            capabilities=[AgentCapability(name="Testing")],
-            metadata=AgentMetadata(name="TestingAgent", description="Handles testing-related tasks"),
+            capability="Testing",
+            description="Reserved for test-execution tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled testing task: {task.description}"])
 
-
-class DocumentationAgent(BaseAgent):
+class DocumentationAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="DocumentationAgent",
-            capabilities=[AgentCapability(name="Documentation")],
-            metadata=AgentMetadata(name="DocumentationAgent", description="Handles documentation-related tasks"),
+            capability="Documentation",
+            description="Reserved for documentation tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled documentation task: {task.description}"])
 
-
-class GitAgent(BaseAgent):
+class GitAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="GitAgent",
-            capabilities=[AgentCapability(name="Git")],
-            metadata=AgentMetadata(name="GitAgent", description="Handles git-related tasks"),
+            capability="Git",
+            description="Reserved for Git tasks",
         )
 
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled git task: {task.description}"])
 
+class UnrealAgent(NotImplementedAgent):
+    """A future MCP-backed agent; the injected port is intentionally unused."""
 
-class UnrealAgent(BaseAgent):
-    def __init__(self) -> None:
+    def __init__(self, mcp_manager: object | None = None) -> None:
+        self._mcp_manager = mcp_manager
         super().__init__(
             name="UnrealAgent",
-            capabilities=[AgentCapability(name="Unreal")],
-            metadata=AgentMetadata(name="UnrealAgent", description="Handles Unreal-related tasks"),
+            capability="Unreal",
+            description="Reserved for Unreal MCP-backed tasks",
         )
 
     def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled Unreal task: {task.description}"])
+        result = super().execute(task, context)
+        result.metadata["mcp_port_configured"] = self._mcp_manager is not None
+        return result
 
 
-class ProjectManagerAgent(BaseAgent):
+class ProjectManagerAgent(NotImplementedAgent):
     def __init__(self) -> None:
         super().__init__(
             name="ProjectManagerAgent",
-            capabilities=[AgentCapability(name="ProjectManagement")],
-            metadata=AgentMetadata(name="ProjectManagerAgent", description="Handles project management tasks"),
+            capability="ProjectManagement",
+            description="Reserved for project-management tasks",
         )
-
-    def execute(self, task: AgentTask, context: AgentContext) -> AgentResult:
-        return AgentResult(status=AgentStatus.IDLE, logs=[f"Handled project management task: {task.description}"])

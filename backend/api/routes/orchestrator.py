@@ -1,15 +1,40 @@
-from fastapi import APIRouter, Request
+"""Compatibility endpoint for direct orchestrator requests."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, HTTPException, Request, status
+
+from backend.orchestrator.errors import (
+    InvalidOrchestrationRequestError,
+    RuntimeUnavailableError,
+    UnsupportedRequestError,
+)
 
 router = APIRouter(prefix="/orchestrator", tags=["orchestrator"])
 
 
 @router.post("/request")
 def handle_orchestrator_request(request: Request, request_text: str) -> dict[str, object]:
-    """Route a user request through the orchestrator layer."""
-    runtime = getattr(request.app.state, "runtime", None)
-    if runtime is None:
-        raise RuntimeError("Runtime is not initialized")
-    orchestrator = runtime.get_service("orchestrator") if hasattr(runtime, "get_service") else None
+    """Execute a supported request without the Brain/memory application use case."""
+
+    container = getattr(request.app.state, "container", None)
+    orchestrator = getattr(container, "orchestrator", None)
     if orchestrator is None:
-        raise RuntimeError("Orchestrator is not registered")
-    return orchestrator.handle_request(request_text)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Orchestrator is not initialized",
+        )
+    try:
+        return orchestrator.handle_request(request_text)
+    except InvalidOrchestrationRequestError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    except UnsupportedRequestError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(error),
+        ) from error
+    except RuntimeUnavailableError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error

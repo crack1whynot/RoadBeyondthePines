@@ -33,11 +33,13 @@ ProviderFactory -> ProviderRegistry -> ProviderManager
 GenerationRequest -> AIProvider.generate() -> GenerationResponse
 ```
 
-At application construction, `create_app_container()` in
-`backend/core/di.py` registers supported provider builders, creates the
-configured provider, registers the created instance, and selects it as the
-active provider. `backend/app/main.py` also registers the manager in the
-Runtime Service Registry as `"ai_provider_manager"`.
+During FastAPI lifespan startup, `backend/app/main.py` calls
+`create_app_container()` in `backend/core/di.py`. The composition root
+registers supported provider builders, creates the configured provider,
+registers the created instance, and selects it as the active provider. The
+composition root (not the route layer or `main.py`) registers the manager in
+the Runtime Service Registry as `"ai_provider_manager"` for compatibility
+lookup.
 
 The HTTP routes use `request.app.state.container.provider_manager`. They do
 not import or construct a concrete provider themselves.
@@ -295,8 +297,8 @@ Other available endpoints are `GET /providers` and `GET /providers/active`.
 - Unexpected exceptions from a future provider are not wrapped by
   `ProviderManager`; only a provider that raises `ProviderGenerationError`
   reaches the API's 502 mapping.
-- Provider configuration is validated after `Runtime.initialize()`. An
-  unsupported `AI_PROVIDER` aborts container construction, and this failure
-  path has no Runtime cleanup wrapper.
+- Provider configuration is validated while the AppContainer is being built,
+  before its Runtime worker is started. An unsupported `AI_PROVIDER` aborts
+  container construction rather than leaving a running worker behind.
 - The `placeholder` startup alias resolves to `MockProvider`/`mock`, rather
   than becoming an independently addressable provider name.

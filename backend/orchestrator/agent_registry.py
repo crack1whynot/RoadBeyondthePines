@@ -16,7 +16,11 @@ class AgentDefinition:
 
 
 class AgentRegistry:
-    """Registry of agents that can fulfill orchestrated capabilities."""
+    """Legacy planning metadata registry; not used by the execution pipeline.
+
+    Canonical runtime dispatch uses :class:`backend.agent_system.agent_registry.AgentRegistry`.
+    This lightweight structure remains only to avoid breaking old imports.
+    """
 
     def __init__(self) -> None:
         self._agents: dict[str, AgentDefinition] = {}

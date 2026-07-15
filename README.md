@@ -9,10 +9,10 @@ Road Beyond the Pines Studio is a production-oriented AI-powered development env
 - Application settings endpoint at /settings
 - Logging and error handling in the API layer
 - Runtime layer with service registry, event bus, command bus, task queue, worker, state manager, and plugin loader
-- Orchestrator layer that turns structured goals into runtime-backed task execution
-- Brain layer that understands requests, builds context, and generates provider-independent goals
-- Memory layer for persistent, structured project knowledge and snapshots
-- Provider-independent Agent System with registry, manager, factory, loader, lifecycle, and default agents
+- Orchestrator layer that executes explicit diagnostic/echo goals through the Runtime
+- Brain layer that builds context and unique goals, plus `/brain/execute` for the Phase 0 handoff
+- Memory layer for structured in-process knowledge with optional JSON persistence
+- Provider-independent Agent System with registry, manager, factory, loader, lifecycle, and one real DiagnosticAgent
 - Placeholder manager services for plugins, Unreal, Git, and tasks
 
 ## Run locally
@@ -54,4 +54,7 @@ npm run dev
 
 ## Status
 
-The project is now running as an MVP foundation with working frontend-backend connectivity, a runtime layer, an orchestrator layer, a new Brain layer that understands requests and produces structured goals for planning, a new Memory layer that persists structured project knowledge, and a new provider-independent Agent System for future execution integration.
+The project is an MVP foundation with a truthful local execution pipeline for
+explicit diagnostic/echo requests. It does not yet generate gameplay systems,
+control a live Unreal Editor, use a real AI provider, or automate Git/build
+work. See `docs/EXECUTION_PIPELINE.md` for the current execution boundary.

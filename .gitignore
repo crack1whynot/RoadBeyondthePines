@@ -8,6 +8,9 @@ venv/
 .pytest_cache/
 .mypy_cache/
 
+# Local runtime state
+data/
+
 # Frontend
 node_modules/
 dist/

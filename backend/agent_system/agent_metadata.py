@@ -11,5 +11,7 @@ class AgentMetadata:
     name: str
     version: str = "0.1.0"
     description: str = ""
+    enabled: bool = True
+    priority: int = 0
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)

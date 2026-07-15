@@ -13,7 +13,12 @@ class JobHandler(Protocol):
 
 
 class BaseJobHandler:
-    """Base implementation for job handlers."""
+    """Base class for job handlers.
+
+    It intentionally does not fabricate a success result.  Concrete handlers
+    must perform work and return a truthful :class:`JobResult` (or a value the
+    worker can normalize).
+    """
 
     def handle(self, job: Job) -> JobResult:
-        return JobResult(success=True, payload={"job_id": job.id, "name": job.name})
+        raise NotImplementedError("Concrete job handlers must implement handle(job)")

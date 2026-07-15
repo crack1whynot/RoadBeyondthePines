@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from backend.brain.goal import Goal
 
@@ -9,11 +9,7 @@ from backend.brain.goal import Goal
 class GoalManager:
     """Stores and manages the goals created by the Brain layer."""
 
-    _goals: list[Goal] = None  # type: ignore[assignment]
-
-    def __post_init__(self) -> None:
-        if self._goals is None:
-            self._goals = []
+    _goals: list[Goal] = field(default_factory=list)
 
     def add_goal(self, goal: Goal) -> None:
         self._goals.append(goal)

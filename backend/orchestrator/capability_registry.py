@@ -12,7 +12,7 @@ class CapabilityDefinition:
 
 
 class CapabilityRegistry:
-    """Registry of capabilities that agents can fulfill."""
+    """Legacy planning metadata registry; not used for Phase 0 dispatch."""
 
     def __init__(self) -> None:
         self._capabilities: dict[str, CapabilityDefinition] = {}

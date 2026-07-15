@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import uuid4
 
 from backend.brain.context import BrainContext
 from backend.brain.decision import Decision
@@ -17,13 +18,16 @@ class ReasoningPipeline:
     def reason(self, context: BrainContext) -> tuple[Decision, Goal]:
         decision = self.decision_engine.decide(context)
         goal = Goal(
-            id="goal-001",
+            id=str(uuid4()),
             priority=1,
             description=f"Understand and prepare for: {context.request_text}",
             required_capabilities=[decision.target],
             dependencies=[],
             expected_result="A clear, provider-independent goal ready for planning.",
             constraints=["No direct execution", "No direct runtime invocation"],
-            metadata={"decision": decision.to_dict()},
+            metadata={
+                "decision": decision.to_dict(),
+                "request_text": context.request_text,
+            },
         )
         return decision, goal
