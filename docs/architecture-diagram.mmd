@@ -1,0 +1,8 @@
+flowchart TD
+    User[User Request] --> Brain[Brain Layer]
+    Brain --> Context[Context Builder]
+    Brain --> Decision[Decision Engine]
+    Brain --> Goal[Goal Model]
+    Goal --> Planner[Planner]
+    Planner --> Orchestrator[Orchestrator]
+    Orchestrator --> Runtime[Runtime Layer]
